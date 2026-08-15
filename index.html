@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Council Election — Official Ballot</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1c2b45">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SEKESS Vote">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#1c2b45;
+    --navy-deep:#12192b;
+    --paper:#f6f3ec;
+    --paper-line:#dcd5c4;
+    --ink:#22262e;
+    --amber:#b8862f;
+    --amber-soft:#e7d3a4;
+    --good:#3f6b4a;
+    --bad:#9c3b3b;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--navy-deep);
+    background-image:
+      radial-gradient(circle at 15% 10%, rgba(255,255,255,0.04), transparent 40%),
+      radial-gradient(circle at 85% 90%, rgba(255,255,255,0.03), transparent 40%);
+    font-family:'IBM Plex Sans', sans-serif;
+    color:var(--ink);
+    min-height:100vh;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding:32px 16px 80px;
+  }
+  .booklet{
+    width:100%;
+    max-width:640px;
+    background:var(--paper);
+    border-radius:2px;
+    box-shadow:0 30px 60px rgba(0,0,0,0.45), 0 0 0 1px rgba(0,0,0,0.05);
+    position:relative;
+    overflow:hidden;
+  }
+  .booklet::before{
+    content:"";
+    position:absolute;
+    top:0; left:0; bottom:0;
+    width:64px;
+    background:repeating-linear-gradient(
+      180deg,
+      transparent 0 24px,
+      rgba(184,134,47,0.15) 24px 25px
+    );
+    pointer-events:none;
+    opacity:0.5;
+  }
+  .cover{
+    padding:56px 48px 44px;
+    background:var(--navy);
+    color:var(--paper);
+    position:relative;
+  }
+  .cover .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    color:var(--amber-soft);
+    margin:0 0 14px;
+  }
+  .cover h1{
+    font-family:'Newsreader', serif;
+    font-weight:600;
+    font-size:34px;
+    line-height:1.15;
+    margin:0 0 10px;
+  }
+  .cover p.sub{
+    font-family:'Newsreader', serif;
+    font-style:italic;
+    font-size:16px;
+    color:#c9d1e0;
+    margin:0 0 28px;
+  }
+  .cover .meta{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:#9fb0c9;
+    display:flex;
+    gap:24px;
+    flex-wrap:wrap;
+    border-top:1px solid rgba(255,255,255,0.15);
+    padding-top:16px;
+  }
+  .body-pad{ padding:40px 48px 48px; }
+  .field{ margin-bottom:18px; }
+  .field label{
+    display:block;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:#6b6455;
+    margin-bottom:6px;
+  }
+  .field input{
+    width:100%;
+    padding:11px 12px;
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:15px;
+    border:1px solid var(--paper-line);
+    background:#fffdf8;
+    border-radius:3px;
+    color:var(--ink);
+  }
+  .field input:focus{ outline:2px solid var(--amber); outline-offset:1px; }
+  .start-btn, .nav-btn, .send-btn{
+    font-family:'IBM Plex Sans', sans-serif;
+    font-weight:600;
+    font-size:14px;
+    border:none;
+    cursor:pointer;
+    border-radius:3px;
+    padding:12px 22px;
+    transition:transform .12s ease, box-shadow .12s ease;
+  }
+  .start-btn, .send-btn{
+    background:var(--amber);
+    color:#231a08;
+  }
+  .start-btn:hover, .send-btn:hover{ transform:translateY(-1px); box-shadow:0 6px 14px rgba(184,134,47,0.35); }
+  .start-btn:disabled{ background:#cbbb96; cursor:not-allowed; transform:none; box-shadow:none; }
+  .hint{ font-size:12.5px; color:#847a63; margin-top:6px; }
+  .msg-box{
+    margin-top:16px; padding:12px 14px; border-radius:3px; font-size:13px; display:none;
+  }
+  .msg-box.error{ border:1px solid var(--bad); background:#fbecec; color:var(--bad); }
+  .msg-box.loading{ border:1px solid var(--paper-line); background:#efe9d8; color:#6b6455; }
+
+  .progress-row{
+    display:flex; align-items:center; justify-content:space-between;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px; color:#6b6455;
+    margin-bottom:18px;
+  }
+  .progress-track{
+    height:4px; background:var(--paper-line); border-radius:2px; overflow:hidden; margin:8px 0 22px;
+  }
+  .progress-fill{ height:100%; background:var(--amber); transition:width .25s ease; }
+
+  .q-eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--amber);
+    margin-bottom:8px;
+  }
+  .q-text{
+    font-family:'Newsreader', serif;
+    font-size:24px; line-height:1.3; font-weight:500;
+    margin:0 0 6px;
+  }
+  .q-desc{ font-size:13.5px; color:#6b6455; margin:0 0 22px; }
+  .options{ display:flex; flex-direction:column; gap:14px; margin-bottom:28px; }
+  .option{
+    display:flex; align-items:center; gap:18px;
+    padding:16px 18px;
+    border:1px solid var(--paper-line);
+    border-radius:6px;
+    background:#fffdf8;
+    cursor:pointer;
+    transition:border-color .12s ease, background .12s ease;
+  }
+  .option:hover{ border-color:#b8a878; }
+  .option.selected{ border-color:var(--amber); background:#fbf1dc; }
+  .option input{ accent-color:var(--amber); flex-shrink:0; width:18px; height:18px; }
+  .option .photo{
+    width:140px; height:140px; border-radius:50%; object-fit:cover; flex-shrink:0;
+    border:3px solid var(--paper-line); background:#e9e2cc;
+  }
+  .option.selected .photo{ border-color:var(--amber); }
+  .option .photo.placeholder{
+    display:flex; align-items:center; justify-content:center;
+    font-family:'IBM Plex Mono', monospace; font-size:38px; color:#8a7f65;
+  }
+  .option .candname{ font-size:17.5px; font-weight:600; }
+  .option .candbio{ font-size:13.5px; color:#6b6455; margin-top:3px; }
+
+  .nav-row{ display:flex; justify-content:space-between; align-items:center; }
+  .nav-btn{
+    background:transparent;
+    color:var(--navy);
+    border:1px solid var(--navy);
+  }
+  .nav-btn:hover{ background:var(--navy); color:var(--paper); }
+  .nav-btn:disabled{ opacity:0.35; cursor:not-allowed; }
+  .nav-btn.primary{ background:var(--navy); color:var(--paper); }
+  .nav-btn.primary:hover{ background:var(--navy-deep); }
+  .nav-btn.primary:disabled{ background:#8b93a3; border-color:#8b93a3; color:#e5e8ee; }
+
+  .jumpgrid{ display:flex; flex-wrap:wrap; gap:6px; margin:18px 0 0; }
+  .jumpgrid button{
+    min-width:32px; height:28px; padding:0 6px;
+    font-family:'IBM Plex Mono', monospace; font-size:11px;
+    border:1px solid var(--paper-line); background:#fffdf8; color:#6b6455;
+    border-radius:2px; cursor:pointer;
+  }
+  .jumpgrid button.answered{ background:#e9e2cc; border-color:#c9b98a; color:#4a4636; }
+  .jumpgrid button.current{ border-color:var(--amber); border-width:2px; color:var(--ink); }
+
+  /* review */
+  .review-item{ border-bottom:1px solid var(--paper-line); padding:14px 0; display:flex; align-items:center; gap:14px; }
+  .review-item:last-child{ border-bottom:none; }
+  .review-item .photo{ width:40px; height:40px; border-radius:50%; object-fit:cover; border:1px solid var(--paper-line); flex-shrink:0; }
+  .review-pos{ font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--amber); margin-bottom:2px; }
+  .review-cand{ font-size:16px; font-weight:600; }
+  .review-edit{ font-family:'IBM Plex Mono', monospace; font-size:11px; color:#6b6455; background:none; border:none; text-decoration:underline; cursor:pointer; padding:0; margin-top:4px; }
+
+  /* confirmation */
+  .stamp-wrap{ display:flex; justify-content:center; margin:6px 0 26px; }
+  .stamp{
+    width:150px; height:150px; border-radius:50%;
+    border:3px solid var(--amber);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    transform:rotate(-6deg);
+    font-family:'IBM Plex Mono', monospace;
+    color:var(--amber);
+    text-align:center;
+  }
+  .stamp .big{ font-size:16px; font-weight:600; line-height:1.25; letter-spacing:0.04em; text-transform:uppercase; }
+  .stamp .small{ font-size:11px; margin-top:6px; letter-spacing:0.05em; }
+  .result-title{
+    font-family:'Newsreader', serif; font-size:24px; text-align:center; margin:0 0 6px;
+  }
+  .result-sub{ text-align:center; color:#6b6455; font-size:14px; margin:0 0 30px; }
+
+  .footer-note{
+    text-align:center; font-family:'IBM Plex Mono', monospace; font-size:11px;
+    color:#5a6a86; margin-top:18px;
+  }
+  .hidden{ display:none !important; }
+  @media (max-width:520px){
+    .cover, .body-pad{ padding-left:26px; padding-right:26px; }
+    .cover h1{ font-size:26px; }
+    .q-text{ font-size:20px; }
+    .option .photo{ width:100px; height:100px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="booklet">
+
+  <!-- ACCESS GATE SCREEN -->
+  <section id="screen-gate">
+    <div class="cover">
+      <p class="eyebrow">Restricted Access</p>
+      <h1>Election Officer Lock</h1>
+      <p class="sub">Enter the access code to open this ballot</p>
+    </div>
+    <div class="body-pad">
+      <div class="field">
+        <label for="gatePass">Access code</label>
+        <input type="password" id="gatePass" placeholder="Access code" autocomplete="off">
+      </div>
+      <button class="start-btn" id="gateBtn">Unlock ballot</button>
+      <div class="msg-box error" id="gateError"></div>
+    </div>
+  </section>
+
+  <!-- LOGIN / START SCREEN -->
+  <section id="screen-start" class="hidden">
+    <div class="cover">
+      <p class="eyebrow">Student Representative Council · 2026 Election</p>
+      <h1>Official Ballot</h1>
+      <p class="sub">Sign in with your voting credentials to begin</p>
+      <div class="meta">
+        <span id="metaPositions">3 POSITIONS</span>
+        <span>ONE VOTE EACH</span>
+        <span>LOGIN REQUIRED</span>
+      </div>
+    </div>
+    <div class="body-pad">
+      <div class="field">
+        <label for="loginUser">Username</label>
+        <input type="text" id="loginUser" placeholder="e.g. voter047" autocomplete="username">
+      </div>
+      <div class="field">
+        <label for="loginPass">Password</label>
+        <input type="password" id="loginPass" placeholder="Your voting password" autocomplete="current-password">
+      </div>
+      <button class="start-btn" id="startBtn" disabled>Sign in &amp; vote</button>
+      <p class="hint">Use the username and password you were issued. Each credential can vote once, checked against the election roll.</p>
+      <div class="msg-box error" id="loginError"></div>
+      <div class="msg-box loading" id="loginLoading">Checking your credentials…</div>
+    </div>
+  </section>
+
+  <!-- VOTING SCREEN -->
+  <section id="screen-vote" class="hidden">
+    <div class="body-pad" style="padding-top:36px;">
+      <div class="progress-row">
+        <span id="progressLabel">Position 1 of 3</span>
+        <span id="answeredLabel">0 selected</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+
+      <p class="q-eyebrow" id="posEyebrow">Position</p>
+      <p class="q-text" id="posText"></p>
+      <p class="q-desc" id="posDesc"></p>
+      <div class="options" id="candOptions"></div>
+
+      <div class="nav-row">
+        <button class="nav-btn" id="prevBtn">← Previous</button>
+        <button class="nav-btn primary" id="nextBtn" disabled>Next →</button>
+      </div>
+
+      <div class="jumpgrid" id="jumpGrid"></div>
+    </div>
+  </section>
+
+  <!-- REVIEW SCREEN -->
+  <section id="screen-review" class="hidden">
+    <div class="body-pad" style="padding-top:44px;">
+      <p class="q-eyebrow">Review your ballot</p>
+      <p class="q-text" style="margin-bottom:22px;">Check your selections before submitting</p>
+      <div id="reviewList"></div>
+      <div class="msg-box error" id="submitError"></div>
+      <div class="msg-box loading" id="submitLoading">Submitting your ballot…</div>
+      <div class="nav-row" style="margin-top:26px;">
+        <button class="nav-btn" id="backToVoteBtn">← Back to ballot</button>
+        <button class="nav-btn primary" id="submitBtn">Cast my vote</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONFIRMATION SCREEN -->
+  <section id="screen-confirm" class="hidden">
+    <div class="body-pad" style="padding-top:44px;">
+      <div class="stamp-wrap">
+        <div class="stamp">
+          <div class="big">Ballot Cast</div>
+          <div class="small" id="confirmTime">–</div>
+        </div>
+      </div>
+      <p class="result-title" id="confirmTitle">Thank you for voting</p>
+      <p class="result-sub" id="confirmSub"></p>
+
+      <div id="confirmList"></div>
+
+      <p class="footer-note">STUDENT REPRESENTATIVE COUNCIL · 2026 ELECTION</p>
+    </div>
+  </section>
+
+</div>
+
+<script>
+// ============================================================
+// EDIT THIS SECTION to configure your own election
+// ============================================================
+
+// Paste the Web App URL from your Apps Script deployment here.
+const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwpXMLIEu5xtxQccY6y0SVad2GASfpjNf1VPqNgz6T50hyQpBcZAk3z9QBoYCjaFGwvrA/exec";
+
+const ELECTION_TITLE = "SEKESS WELFARE  · 2026 Election";
+
+// Set this to whatever code you want to share with voters (e.g. printed on
+// the notice or written on the board). Anyone opening the page must type
+// this before the ballot appears. This is a basic access gate, not strong
+// encryption — someone who downloads this file and reads the code can still
+// see the value below.
+const ACCESS_PASSCODE = "sekess2026";
+
+// For each candidate, "img" can be any public image URL (e.g. a Google Drive
+// "anyone with the link" share URL converted to a direct-image link, or an
+// Imgur link). Leave img: "" to show a placeholder circle with initials instead.
+const POSITIONS = [
+  { position: "President", desc: "Leads the council and represents the student body.",
+    candidates: [
+      { name: "Kwame Asante", bio: "Level 300, Computer Science", img: "https://lh3.googleusercontent.com/d/1DDS-gJxgv7MwKepQ2a6VZgFzfrPkPbbM" },
+      { name: "Efua Mensah", bio: "Level 300, Business Administration", img: "" },
+      { name: "Abstain / No vote", bio: "", img: "" }
+    ] },
+  { position: "Vice President", desc: "Supports the President and oversees committees.",
+    candidates: [
+      { name: "Yaw Boateng", bio: "Level 200, Engineering", img: "" },
+      { name: "Adjoa Darko", bio: "Level 300, Nursing", img: "" },
+      { name: "Abstain / No vote", bio: "", img: "" }
+    ] },
+  { position: "Treasurer", desc: "Manages council funds and budgets.",
+    candidates: [
+      { name: "Nana Owusu", bio: "Level 200, Accounting", img: "" },
+      { name: "Abstain / No vote", bio: "", img: "" }
+    ] }
+];
+// ============================================================
+
+document.getElementById('metaPositions').textContent = POSITIONS.length + ' POSITION' + (POSITIONS.length === 1 ? '' : 'S');
+document.querySelector('.cover .eyebrow').textContent = ELECTION_TITLE;
+
+let current = 0;
+let choices = new Array(POSITIONS.length).fill(null);
+let username = "", password = "";
+
+const gateScreen = document.getElementById('screen-gate');
+const gatePass = document.getElementById('gatePass');
+const gateBtn = document.getElementById('gateBtn');
+const gateError = document.getElementById('gateError');
+
+function tryUnlock(){
+  if (gatePass.value === ACCESS_PASSCODE){
+    gateScreen.classList.add('hidden');
+    startScreen.classList.remove('hidden');
+  } else {
+    showBox(gateError, 'Incorrect access code. Please try again.');
+  }
+}
+gateBtn.addEventListener('click', tryUnlock);
+gatePass.addEventListener('keydown', (e) => { if (e.key === 'Enter') tryUnlock(); });
+
+const startScreen = document.getElementById('screen-start');
+const voteScreen = document.getElementById('screen-vote');
+const reviewScreen = document.getElementById('screen-review');
+const confirmScreen = document.getElementById('screen-confirm');
+const userInput = document.getElementById('loginUser');
+const passInput = document.getElementById('loginPass');
+const startBtn = document.getElementById('startBtn');
+const loginError = document.getElementById('loginError');
+const loginLoading = document.getElementById('loginLoading');
+
+function showBox(box, msg){ box.textContent = msg || box.textContent; box.style.display = 'block'; }
+function hideBox(box){ box.style.display = 'none'; }
+
+function checkFormFilled(){
+  startBtn.disabled = userInput.value.trim().length === 0 || passInput.value.trim().length === 0;
+}
+userInput.addEventListener('input', checkFormFilled);
+passInput.addEventListener('input', checkFormFilled);
+
+async function callBackend(action, extra){
+  if (!WEBAPP_URL || WEBAPP_URL.indexOf('PASTE_YOUR') === 0){
+    throw new Error('This ballot is not connected to the election server yet. Contact the election officer.');
+  }
+  const resp = await fetch(WEBAPP_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(Object.assign({ action, username, password }, extra))
+  });
+  const data = await resp.json();
+  if (!data.ok) throw new Error(data.error || 'Something went wrong.');
+  return data;
+}
+
+startBtn.addEventListener('click', async () => {
+  username = userInput.value.trim();
+  password = passInput.value.trim();
+  hideBox(loginError);
+  showBox(loginLoading, 'Checking your credentials…');
+  startBtn.disabled = true;
+  try {
+    await callBackend('login');
+    hideBox(loginLoading);
+    startScreen.classList.add('hidden');
+    voteScreen.classList.remove('hidden');
+    buildJumpGrid();
+    renderPosition();
+  } catch (err) {
+    hideBox(loginLoading);
+    showBox(loginError, err.message);
+    startBtn.disabled = false;
+  }
+});
+
+function candPhotoHTML(cand){
+  if (cand.img){
+    return `<img class="photo" src="${cand.img}" alt="${cand.name}">`;
+  }
+  const initials = cand.name.split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase();
+  return `<span class="photo placeholder">${initials}</span>`;
+}
+
+function buildJumpGrid(){
+  const grid = document.getElementById('jumpGrid');
+  grid.innerHTML = '';
+  POSITIONS.forEach((_, i) => {
+    const b = document.createElement('button');
+    b.textContent = i+1;
+    b.addEventListener('click', () => { current = i; renderPosition(); });
+    grid.appendChild(b);
+  });
+}
+
+function renderPosition(){
+  const item = POSITIONS[current];
+  document.getElementById('posEyebrow').textContent = 'Position ' + (current+1) + ' of ' + POSITIONS.length;
+  document.getElementById('posText').textContent = item.position;
+  document.getElementById('posDesc').textContent = item.desc || '';
+  document.getElementById('progressLabel').textContent = `Position ${current+1} of ${POSITIONS.length}`;
+  const answeredCount = choices.filter(a => a !== null).length;
+  document.getElementById('answeredLabel').textContent = `${answeredCount} selected`;
+  document.getElementById('progressFill').style.width = `${(answeredCount/POSITIONS.length)*100}%`;
+
+  const optWrap = document.getElementById('candOptions');
+  optWrap.innerHTML = '';
+  item.candidates.forEach((cand, i) => {
+    const div = document.createElement('div');
+    div.className = 'option' + (choices[current] === i ? ' selected' : '');
+    div.innerHTML = `<input type="radio" name="cand" ${choices[current]===i?'checked':''}>
+      ${candPhotoHTML(cand)}
+      <div>
+        <div class="candname">${cand.name}</div>
+        ${cand.bio ? `<div class="candbio">${cand.bio}</div>` : ''}
+      </div>`;
+    div.addEventListener('click', () => {
+      choices[current] = i;
+      renderPosition();
+    });
+    optWrap.appendChild(div);
+  });
+
+  document.getElementById('prevBtn').disabled = current === 0;
+  const nextBtn = document.getElementById('nextBtn');
+  nextBtn.disabled = choices[current] === null;
+  nextBtn.textContent = current === POSITIONS.length - 1 ? 'Review ballot →' : 'Next →';
+
+  document.querySelectorAll('#jumpGrid button').forEach((b, i) => {
+    b.classList.toggle('answered', choices[i] !== null);
+    b.classList.toggle('current', i === current);
+  });
+}
+
+document.getElementById('prevBtn').addEventListener('click', () => {
+  if (current > 0){ current--; renderPosition(); }
+});
+
+document.getElementById('nextBtn').addEventListener('click', () => {
+  if (choices[current] === null) return;
+  if (current < POSITIONS.length - 1){
+    current++;
+    renderPosition();
+  } else {
+    showReview();
+  }
+});
+
+function showReview(){
+  voteScreen.classList.add('hidden');
+  reviewScreen.classList.remove('hidden');
+  const list = document.getElementById('reviewList');
+  list.innerHTML = '';
+  POSITIONS.forEach((item, i) => {
+    const cand = item.candidates[choices[i]];
+    const div = document.createElement('div');
+    div.className = 'review-item';
+    div.innerHTML = `
+      ${candPhotoHTML(cand)}
+      <div style="flex:1;">
+        <div class="review-pos">${item.position}</div>
+        <div class="review-cand">${cand.name}</div>
+        <button class="review-edit" data-idx="${i}">Change selection</button>
+      </div>
+    `;
+    list.appendChild(div);
+  });
+  list.querySelectorAll('.review-edit').forEach(btn => {
+    btn.addEventListener('click', () => {
+      current = parseInt(btn.dataset.idx, 10);
+      reviewScreen.classList.add('hidden');
+      voteScreen.classList.remove('hidden');
+      renderPosition();
+    });
+  });
+}
+
+document.getElementById('backToVoteBtn').addEventListener('click', () => {
+  reviewScreen.classList.add('hidden');
+  voteScreen.classList.remove('hidden');
+  current = POSITIONS.length - 1;
+  renderPosition();
+});
+
+document.getElementById('submitBtn').addEventListener('click', async () => {
+  const submitError = document.getElementById('submitError');
+  const submitLoading = document.getElementById('submitLoading');
+  const submitBtn = document.getElementById('submitBtn');
+  hideBox(submitError);
+  showBox(submitLoading, 'Submitting your ballot…');
+  submitBtn.disabled = true;
+  try {
+    const choiceNames = POSITIONS.map((item, i) => item.candidates[choices[i]].name);
+    await callBackend('submitVote', { choices: choiceNames });
+    hideBox(submitLoading);
+    reviewScreen.classList.add('hidden');
+    confirmScreen.classList.remove('hidden');
+    showConfirmation();
+  } catch (err) {
+    hideBox(submitLoading);
+    showBox(submitError, err.message);
+    submitBtn.disabled = false;
+  }
+});
+
+function showConfirmation(){
+  const now = new Date();
+  document.getElementById('confirmTime').textContent = now.toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' });
+  document.getElementById('confirmTitle').textContent = 'Thank you for voting';
+  document.getElementById('confirmSub').textContent = `Your ballot for ${POSITIONS.length} position${POSITIONS.length === 1 ? '' : 's'} has been recorded. Your account (${username}) is now marked as voted.`;
+
+  const list = document.getElementById('confirmList');
+  list.innerHTML = '';
+  POSITIONS.forEach((item, i) => {
+    const cand = item.candidates[choices[i]];
+    const div = document.createElement('div');
+    div.className = 'review-item';
+    div.innerHTML = `${candPhotoHTML(cand)}<div><div class="review-pos">${item.position}</div><div class="review-cand">${cand.name}</div></div>`;
+    list.appendChild(div);
+  });
+}
+
+// Register service worker so the app can be installed and reopened
+// without a fresh download each time.
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+</script>
+
+</body>
+</html>
