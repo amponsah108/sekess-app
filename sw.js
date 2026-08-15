@@ -1,4 +1,4 @@
-const CACHE_NAME = "sekess-ballot-v2";
+const CACHE_NAME = "sekess-ballot-v3";
 const ASSETS = [
   "./",
   "./index.html",
